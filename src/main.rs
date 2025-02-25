@@ -44,7 +44,7 @@ async fn main() {
                 )
                 .from(address!("15d34AAf54267DB7D7c367839AAf71A00a2C6A65"));
             
-            let receipt = task.send().await.unwrap().get_receipt().await.unwrap();
+            let receipt: blueprint_sdk::alloy::rpc::types::TransactionReceipt = task.send().await.unwrap().get_receipt().await.unwrap();
             if receipt.status() {
                 info!("Buy order created successfully");
             } else {

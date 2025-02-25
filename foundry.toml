@@ -6,7 +6,13 @@ script = "contracts/script"
 cache_path = "contracts/cache"
 broadcast = "contracts/broadcast"
 libs = ["dependencies"]
-auto_detect_remappings = true
+remappings = [
+    "@eigenlayer/=dependencies/eigenlayer-middleware-0.5.4/lib/eigenlayer-contracts/src/",
+    "@eigenlayer-middleware/=dependencies/eigenlayer-middleware-0.5.4/",
+    "eigenlayer-contracts/=dependencies/eigenlayer-middleware-0.5.4/lib/eigenlayer-contracts/",
+    "forge-std-1.9.5/=dependencies/forge-std-1.9.5/",
+    "orderbook/=contracts/src/",
+]
 
 [soldeer]
 recursive_deps = true
@@ -14,8 +20,7 @@ remappings_location = "txt"
 remappings_version = false
 
 [dependencies]
-eigenlayer-contracts = { version = "0.5.4", git = "https://github.com/Layr-Labs/eigenlayer-contracts.git", tag = "v0.5.4" }
 eigenlayer-middleware = { version = "0.5.4", git = "https://github.com/Layr-Labs/eigenlayer-middleware.git", tag = "v0.5.4-mainnet-rewards-v2" }
-forge-std = { version = "1.9.4" }
+forge-std = { version = "1.9.5" }
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

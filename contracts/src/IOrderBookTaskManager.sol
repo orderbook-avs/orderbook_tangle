@@ -26,16 +26,18 @@ interface ITangleTaskManager {
 
     // STRUCTS
     struct Order {
-        address trader;
+        address user;        
         uint256 price;
         uint256 amount;
+        address token;
+        uint256 slippage;
         bool isBuy;
         uint256 timestamp;
-        bool isExecuted;
     }
 
     struct Task {
         Order order;
+        Order[] orderbook;
         uint32 taskCreatedBlock;
         // task submitter decides on the criteria for a task to be completed
         // note that this does not mean the task was "correctly" answered (i.e. the number was squared correctly)
@@ -47,13 +49,21 @@ interface ITangleTaskManager {
         uint32 quorumThresholdPercentage;
     }
 
+    struct Match {
+        Order buyOrder;
+        Order sellOrder;
+        uint256 buyAmount;
+        uint256 sellAmount;      
+        uint256 price;
+    }
+
     // Task response is hashed and signed by operators.
     // these signatures are aggregated and sent to the contract as response.
     struct TaskResponse {
         // Can be obtained by the operator from the event NewTaskCreated.
         uint32 referenceTaskIndex;
-        uint256 executionPrice;  // The price at which the order was executed
-        address counterparty;    // The matching order's trader
+        // Match struct
+        Match[] matches;
     }
 
     // Extra information related to taskResponse, which is filled inside the contract.
@@ -69,6 +79,8 @@ interface ITangleTaskManager {
     function createNewTask(
         uint256 price,
         uint256 amount,
+        address token,
+        uint256 slippage,
         bool isBuy,
         uint32 quorumThresholdPercentage,
         bytes calldata quorumNumbers

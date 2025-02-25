@@ -1,24 +1,24 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.13;
 
-import "@openzeppelin-upgrades/contracts/proxy/utils/Initializable.sol";
-import "@openzeppelin-upgrades/contracts/access/OwnableUpgradeable.sol";
-import "eigenlayer-contracts/src/contracts/permissions/Pausable.sol";
+import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
+import "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "eigenlayer-middleware/lib/eigenlayer-contracts/src/contracts/permissions/Pausable.sol";
 import "eigenlayer-middleware/src/interfaces/IServiceManager.sol";
 import {BLSApkRegistry} from "eigenlayer-middleware/src/BLSApkRegistry.sol";
 import {RegistryCoordinator} from "eigenlayer-middleware/src/RegistryCoordinator.sol";
 import {BLSSignatureChecker, IRegistryCoordinator} from "eigenlayer-middleware/src/BLSSignatureChecker.sol";
 import {OperatorStateRetriever} from "eigenlayer-middleware/src/OperatorStateRetriever.sol";
 import "eigenlayer-middleware/src/libraries/BN254.sol";
-import "contracts/src/ITangleTaskManager.sol";
+import "contracts/src/IOrderBookTaskManager.sol";
 
-contract TangleTaskManager is
+contract OrderBookTaskManager is
     Initializable,
     OwnableUpgradeable,
     Pausable,
     BLSSignatureChecker,
     OperatorStateRetriever,
-    ITangleTaskManager
+    IOrderBookTaskManager
 {
     using BN254 for BN254.G1Point;
 
@@ -43,9 +43,8 @@ contract TangleTaskManager is
 
     mapping(uint32 => bool) public taskSuccesfullyChallenged;
 
-    // New storage for order tracking
-    mapping(uint32 => ITangleTaskManager.Order) public orders;
-    mapping(address => uint32[]) public userOrders;
+    // Order book
+    Order[] public orders;
 
     address public aggregator;
     address public generator;
@@ -87,27 +86,39 @@ contract TangleTaskManager is
     function createNewTask(
         uint256 price,
         uint256 amount,
+        address token,
+        uint256 slippage,
         bool isBuy,
         uint32 quorumThresholdPercentage,
         bytes calldata quorumNumbers
     ) external onlyTaskGenerator {
+        // Check if the order is valid
+        require(price > 0, "Price must be greater than 0");
+        require(token != address(0), "Token must not be the zero address");        
+        require(amount > 0, "Amount must be greater than 0");
+        require(quorumThresholdPercentage > 0 && quorumThresholdPercentage <= 100, "Quorum threshold percentage must be between 0 and 100");
+        require(quorumNumbers.length > 0, "Quorum numbers must not be empty");
+
+        // Create a new order
+        Order memory newOrder;
+        newOrder.user = msg.sender;
+        newOrder.price = price;
+        newOrder.amount = amount;
+        newOrder.token = token;
+        newOrder.slippage = slippage;
+        newOrder.isBuy = isBuy;
+        newOrder.timestamp = block.timestamp;
+
         // Create a new order task
         Task memory newTask;
-        newTask.order = Order({
-            trader: msg.sender,
-            price: price,
-            amount: amount,
-            isBuy: isBuy,
-            timestamp: block.timestamp,
-            isExecuted: false
-        });
+        newTask.order = newOrder;
+        newTask.orderbook = orders;
         newTask.taskCreatedBlock = uint32(block.number);
         newTask.quorumThresholdPercentage = quorumThresholdPercentage;
         newTask.quorumNumbers = quorumNumbers;
 
-        // Store order
-        orders[latestTaskNum] = newTask.order;
-        userOrders[msg.sender].push(latestTaskNum);
+        // Add the order to the order book
+        orders.push(newOrder);
 
         // Store task hash and emit event
         allTaskHashes[latestTaskNum] = keccak256(abi.encode(newTask));
@@ -168,16 +179,10 @@ contract TangleTaskManager is
                         uint8(quorumThresholdPercentage),
                 "Signatories do not own at least threshold percentage of a quorum"
             );
-        }
-
-        // Verify order execution
-        require(
-            taskResponse.executionPrice <= task.order.price,
-            "Execution price exceeds limit price"
-        );
-
+        }        
+        
         // Mark order as executed
-        orders[taskResponse.referenceTaskIndex].isExecuted = true;
+        // orders[taskResponse.referenceTaskIndex].isExecuted = true;        
 
         TaskResponseMetadata memory taskResponseMetadata = TaskResponseMetadata(
             uint32(block.number),
@@ -231,19 +236,9 @@ contract TangleTaskManager is
 
         // Verify order execution validity
         bool isResponseValid = true;
-        
-        // Check price execution
-        if (order.isBuy && taskResponse.executionPrice > order.price) {
-            isResponseValid = false; // Buy order executed at higher than limit price
-        }
-        if (!order.isBuy && taskResponse.executionPrice < order.price) {
-            isResponseValid = false; // Sell order executed at lower than limit price
-        }
 
-        // Check counterparty validity
-        if (taskResponse.counterparty == address(0)) {
-            isResponseValid = false; // Invalid counterparty
-        }
+        // Check if the order is valid
+        // TODO: Implement this
 
         // if response was valid, no slashing happens so we return
         if (isResponseValid) {
