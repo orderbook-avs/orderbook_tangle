@@ -21,6 +21,7 @@ remappings_version = false
 
 [dependencies]
 eigenlayer-middleware = { version = "0.5.4", git = "https://github.com/Layr-Labs/eigenlayer-middleware.git", tag = "v0.5.4-mainnet-rewards-v2" }
+openzeppelin-contracts = { version = "5.2.0", git = "https://github.com/openzeppelin/openzeppelin-contracts.git", tag = "v5.2.0" }
 forge-std = { version = "1.9.5" }
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

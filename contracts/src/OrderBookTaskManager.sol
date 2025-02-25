@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.13;
 
-import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
-import "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "openzeppelin-contracts/contracts/proxy/utils/Initializable.sol";
+import "openzeppelin-contracts/contracts/access/Ownable.sol";
 import "eigenlayer-middleware/lib/eigenlayer-contracts/src/contracts/permissions/Pausable.sol";
 import "eigenlayer-middleware/src/interfaces/IServiceManager.sol";
 import {BLSApkRegistry} from "eigenlayer-middleware/src/BLSApkRegistry.sol";
@@ -14,7 +14,7 @@ import "contracts/src/IOrderBookTaskManager.sol";
 
 contract OrderBookTaskManager is
     Initializable,
-    OwnableUpgradeable,
+    Ownable,
     Pausable,
     BLSSignatureChecker,
     OperatorStateRetriever,
