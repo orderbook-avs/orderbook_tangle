@@ -1,0 +1,45 @@
+[package]
+name = "ob_avs"
+version = "0.1.0"
+edition = "2021"
+description = "orderbook avs with ai agent"
+authors = ["Pranav Doshi <pranav.rdoshi@gmail.com>"]
+license = "MIT OR Apache-2.0"
+homepage = "ob.xyz"
+repository = "https://github.com/0xPranavDoshi/ob_avs"
+readme = "README.md"
+categories = ["cryptography", "cryptography::cryptocurrencies"]
+keywords = ["tangle", "blueprint", "avs"]
+rust-version = "1.81"
+
+[dependencies]
+# Gadget
+blueprint-sdk = { git = "https://github.com/tangle-network/gadget.git", default-features = false, features = ["std", "eigenlayer", "evm", "macros", "build"] }
+serde = { version = "1.0.208", features = ["derive"] }
+
+
+[build-dependencies]
+blueprint-sdk = { git = "https://github.com/tangle-network/gadget.git", default-features = false, features = ["std", "build"] }
+
+[features]
+default = ["std"]
+std = ["blueprint-sdk/std"]
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "ob_avs"
+path = "src/main.rs"
+
+[package.metadata.blueprint]
+manager = { Evm = "TangleTaskManager" }
+
+[[package.metadata.gadget.Native.sources]]
+owner = "0xPranavDoshi"
+repo = "ob_avs"
+tag = "0.1.0"
+binaries = [
+    { arch = "Amd64", os = "Linux", name = "amd64-linux-ob_avs-gadget" },
+    { arch = "Arm64", os = "Linux", name = "arm64-linux-ob_avs-gadget" },
+]
