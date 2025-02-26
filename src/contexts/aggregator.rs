@@ -1,9 +1,9 @@
 use crate::IBLSSignatureChecker::NonSignerStakesAndSignature;
-use crate::IIncredibleSquaringTaskManager::Task;
-use crate::IIncredibleSquaringTaskManager::TaskResponse;
+use crate::IOrderBookTaskManager::Task;
+use crate::IOrderBookTaskManager::TaskResponse;
 use crate::BN254::G1Point;
 use crate::BN254::G2Point;
-use crate::{contexts::client::SignedTaskResponse, Error, IncredibleSquaringTaskManager};
+use crate::{contexts::client::SignedTaskResponse, Error, OrderBookTaskManager};
 use alloy_network::{Ethereum, NetworkWallet};
 use alloy_primitives::{keccak256, Address};
 use alloy_sol_types::SolType;
@@ -21,15 +21,15 @@ use blueprint_sdk::logging::{debug, error, info};
 use blueprint_sdk::macros::contexts::{EigenlayerContext, KeystoreContext};
 use blueprint_sdk::runners::core::error::RunnerError;
 use blueprint_sdk::runners::core::runner::BackgroundService;
-use eigensdk::client_avsregistry::reader::AvsRegistryChainReader;
-use eigensdk::common::get_provider;
-use eigensdk::crypto_bls::{convert_to_g1_point, convert_to_g2_point, BlsG1Point, BlsG2Point};
-use eigensdk::services_avsregistry::chaincaller::AvsRegistryServiceChainCaller;
-use eigensdk::services_blsaggregation::{
+use blueprint_sdk::eigensdk::client_avsregistry::reader::AvsRegistryChainReader;
+use blueprint_sdk::eigensdk::common::get_provider;
+use blueprint_sdk::eigensdk::crypto_bls::{convert_to_g1_point, convert_to_g2_point, BlsG1Point, BlsG2Point};
+use blueprint_sdk::eigensdk::services_avsregistry::chaincaller::AvsRegistryServiceChainCaller;
+use blueprint_sdk::eigensdk::services_blsaggregation::{
     bls_agg::BlsAggregatorService, bls_aggregation_service_response::BlsAggregationServiceResponse,
 };
-use eigensdk::services_operatorsinfo::operatorsinfo_inmemory::OperatorInfoServiceInMemory;
-use eigensdk::types::avs::{TaskIndex, TaskResponseDigest};
+use blueprint_sdk::eigensdk::services_operatorsinfo::operatorsinfo_inmemory::OperatorInfoServiceInMemory;
+use blueprint_sdk::eigensdk::types::avs::{TaskIndex, TaskResponseDigest};
 use std::collections::HashMap;
 
 pub type BlsAggServiceInMemory = BlsAggregatorService<
@@ -422,7 +422,7 @@ impl AggregatorContext {
 
         let provider = get_provider(&self.http_rpc_url);
         let task_manager =
-            IncredibleSquaringTaskManager::new(self.task_manager_address, provider.clone());
+            OrderBookTaskManager::new(self.task_manager_address, provider.clone());
 
         let _ = task_manager
             .respondToTask(

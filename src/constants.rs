@@ -17,7 +17,7 @@ lazy_static! {
     });
     pub static ref TASK_MANAGER_ADDRESS: Address = env::var("TASK_MANAGER_ADDRESS")
         .map(|addr| addr.parse().expect("Invalid TASK_MANAGER_ADDRESS"))
-        .unwrap_or_else(|_| address!("0000000000000000000000000000000000000000"));
+        .unwrap_or_else(|_| address!("D0141E899a65C95a556fE2B27e5982A6DE7fDD7A"));
 }
 
 pub const OPERATOR_ADDRESS: Address = address!("f39fd6e51aad88f6f4ce6ab8827279cfffb92266");

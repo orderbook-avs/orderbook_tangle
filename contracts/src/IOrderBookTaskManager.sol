@@ -3,7 +3,7 @@ pragma solidity >=0.8.13;
 
 import "eigenlayer-middleware/src/libraries/BN254.sol";
 
-interface ITangleTaskManager {
+interface IOrderBookTaskManager {
     // EVENTS
     event NewTaskCreated(uint32 indexed taskIndex, Task task);
 

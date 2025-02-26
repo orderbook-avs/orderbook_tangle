@@ -1,9 +1,9 @@
 #![allow(dead_code)]
 use crate::contexts::client::SignedTaskResponse;
-use crate::contexts::x_square::EigenSquareContext;
-use crate::ItangleTaskManager::TaskResponse;
+use crate::contexts::order::EigenOrderContext;
+use crate::IOrderBookTaskManager::{TaskResponse, Match, Order};
 use crate::{
-    TangleTaskManager, ProcessorError, TANGLE_TASK_MANAGER_ABI_STRING,
+    OrderBookTaskManager, ProcessorError, ORDER_BOOK_TASK_MANAGER_ABI_STRING,
 };
 use alloy_primitives::{keccak256, Bytes, U256};
 use alloy_sol_types::SolType;
@@ -15,31 +15,30 @@ use blueprint_sdk::logging::{error, info};
 use blueprint_sdk::macros::ext::keystore::backends::bn254::Bn254Backend;
 use blueprint_sdk::macros::job;
 use color_eyre::Result;
-use eigensdk::crypto_bls::BlsKeyPair;
-use eigensdk::crypto_bls::OperatorId;
+use blueprint_sdk::eigensdk::crypto_bls::BlsKeyPair;
+use blueprint_sdk::eigensdk::crypto_bls::OperatorId;
 use std::convert::Infallible;
 
 /// Sends a signed task response to the BLS Aggregator.
 ///
-/// This job is triggered by the `NewTaskCreated` event emitted by the `TangleTaskManager`.
+/// This job is triggered by the `NewTaskCreated` event emitted by the `OrderBookTaskManager`.
 /// The job creates a limit order and sends the signed task response to the BLS Aggregator.
 /// The job returns 1 if the task response was sent successfully.
 /// The job returns 0 if the task response failed to send or failed to get the BLS key.
 #[job(
     id = 0,
-    params(price, quantity, is_buy, task_created_block, quorum_numbers, quorum_threshold_percentage, task_index),
+    params(order, orderbook, task_created_block, quorum_numbers, quorum_threshold_percentage, task_index),
     event_listener(
-        listener = EvmContractEventListener<EigenSquareContext, TangleTaskManager::NewTaskCreated>,
-        instance = TangleTaskManager,
-        abi = TANGLE_TASK_MANAGER_ABI_STRING,
+        listener = EvmContractEventListener<EigenOrderContext, OrderBookTaskManager::NewTaskCreated>,
+        instance = OrderBookTaskManager,
+        abi = ORDER_BOOK_TASK_MANAGER_ABI_STRING,
         pre_processor = convert_event_to_inputs,
     ),
 )]
-pub async fn limit_order_eigen(
-    ctx: EigenSquareContext,
-    price: U256,
-    quantity: U256,
-    is_buy: bool,
+pub async fn order_eigen(
+    ctx: EigenOrderContext,
+    order: Order,
+    orderbook: Vec<Order>,
     task_created_block: u32,
     quorum_numbers: Bytes,
     quorum_threshold_percentage: u8,
@@ -47,12 +46,21 @@ pub async fn limit_order_eigen(
 ) -> std::result::Result<u32, Infallible> {
     let client = ctx.client.clone();
 
-    // Calculate our response to job
+    // Create a sample Match object
+    let sample_match = Match {
+        buyOrder: order,
+        sellOrder: orderbook[5].clone(),
+        buyAmount: U256::from(1),
+        sellAmount: U256::from(1),
+        price: U256::from(1),
+    };
+
+    let matches = vec![sample_match];
+
+    // Create a TaskResponse object
     let task_response = TaskResponse {
         referenceTaskIndex: task_index,
-        price: price,
-        quantity: quantity,
-        isBuy: is_buy,
+        matches: matches,
     };
 
     let bn254_public = ctx.keystore().first_local::<ArkBlsBn254>().unwrap();
@@ -110,17 +118,19 @@ pub fn operator_id_from_key(key: BlsKeyPair) -> OperatorId {
 /// and parse the return type by the index.
 pub async fn convert_event_to_inputs(
     (event, _log): (
-        IncredibleSquaringTaskManager::NewTaskCreated,
+        OrderBookTaskManager::NewTaskCreated,
         alloy_rpc_types::Log,
     ),
-) -> Result<Option<(U256, u32, Bytes, u8, u32)>, ProcessorError> {
+) -> Result<Option<(Order, Vec<Order>, u32, Bytes, u8, u32)>, ProcessorError> {
     let task_index = event.taskIndex;
-    let number_to_be_squared = event.task.numberToBeSquared;
+    let order = event.task.order;
+    let orderbook = event.task.orderbook;
     let task_created_block = event.task.taskCreatedBlock;
     let quorum_numbers = event.task.quorumNumbers;
     let quorum_threshold_percentage = event.task.quorumThresholdPercentage.try_into().unwrap();
     Ok(Some((
-        number_to_be_squared,
+        order,
+        orderbook,
         task_created_block,
         quorum_numbers,
         quorum_threshold_percentage,

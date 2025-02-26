@@ -1,11 +1,12 @@
-use crate::ItangleTaskManager::Task;
+use crate::IOrderBookTaskManager::Task;
 use crate::{
-    contexts::aggregator::AggregatorContext, TangleTaskManager, ProcessorError,
-    TANGLE_TASK_MANAGER_ABI_STRING,
+    contexts::aggregator::AggregatorContext, OrderBookTaskManager, ProcessorError,
+    ORDER_BOOK_TASK_MANAGER_ABI_STRING,
 };
 use blueprint_sdk::event_listeners::evm::EvmContractEventListener;
 use blueprint_sdk::logging::info;
 use std::convert::Infallible;
+use alloy_rpc_types::Log;
 
 const TASK_CHALLENGE_WINDOW_BLOCK: u32 = 100;
 const BLOCK_TIME_SECONDS: u32 = 12;
@@ -15,9 +16,9 @@ const BLOCK_TIME_SECONDS: u32 = 12;
     id = 1,
     params(task, task_index),
     event_listener(
-        listener = EvmContractEventListener<AggregatorContext, TangleTaskManager::NewTaskCreated>,
-        instance = TangleTaskManager,
-        abi = TANGLE_TASK_MANAGER_ABI_STRING,
+        listener = EvmContractEventListener<AggregatorContext, OrderBookTaskManager::NewTaskCreated>,
+        instance = OrderBookTaskManager,
+        abi = ORDER_BOOK_TASK_MANAGER_ABI_STRING,
         pre_processor = convert_event_to_inputs,
     ),
 )]
@@ -58,8 +59,8 @@ pub async fn initialize_bls_task(
 /// and parse the return type by the index.
 pub async fn convert_event_to_inputs(
     event: (
-        TangleTaskManager::NewTaskCreated,
-        alloy_rpc_types::Log,
+        OrderBookTaskManager::NewTaskCreated,
+        Log,
     ),
 ) -> Result<Option<(Task, u32)>, ProcessorError> {
     let task_index = event.0.taskIndex;

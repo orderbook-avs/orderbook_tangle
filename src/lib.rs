@@ -9,8 +9,6 @@ use thiserror::Error;
 pub mod constants;
 pub mod contexts;
 pub mod jobs;
-#[cfg(test)]
-mod tests;
 
 #[derive(Debug, Error)]
 pub enum Error {
