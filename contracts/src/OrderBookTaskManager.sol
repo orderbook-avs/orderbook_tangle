@@ -108,6 +108,8 @@ contract OrderBookTaskManager is
         newOrder.slippage = slippage;
         newOrder.isBuy = isBuy;
         newOrder.timestamp = block.timestamp;
+        newOrder.isPartiallyFilled = false;
+        newOrder.isFilled = false;
 
         // Create a new order task
         Task memory newTask;

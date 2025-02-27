@@ -355,30 +355,52 @@ impl AggregatorContext {
             task_index
         );
 
-        if let Some(aggregated_response) = self
-            .bls_aggregation_service
-            .as_ref()
-            .ok_or_else(|| {
-                std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "BLS Aggregation Service not initialized",
-                )
-            })
-            .map_err(|e| Error::Context(e.to_string()))?
-            .lock()
-            .await
-            .aggregated_response_receiver
-            .lock()
-            .await
-            .recv()
-            .await
-        {
-            info!("Received aggregated response from BLS Aggregation Service");
-            let response = aggregated_response.map_err(|e| Error::Context(e.to_string()))?;
-            self.send_aggregated_response_to_contract(response).await?;
-        } else {
-            info!("No aggregated response received from BLS Aggregation Service");
-        }
+        // self.send_aggregated_response_to_contract(
+        //     BlsAggregationServiceResponse {
+        //         task_index,
+        //         task_response_digest,
+        //         non_signers_pub_keys_g1: vec![],
+        //         quorum_apks_g1: vec![],
+        //         signers_apk_g2: 
+        //         signers_agg_sig_g1: self.bls_aggregation_service.as_ref().unwrap().lock().await.process_new_signature(task_index, task_response_digest, signature, operator_id).unwrap().signers_agg_sig_g1,
+        //         non_signer_quorum_bitmap_indices: vec![],
+        //         quorum_apk_indices: vec![],
+        //         total_stake_indices: vec![],
+        //         non_signer_stake_indices: vec![],
+        //     },
+        // ).await?;
+
+        let aggregated_response = self.bls_aggregation_service.as_ref().unwrap().lock().await.aggregated_response_receiver.lock().await.recv().await.unwrap().unwrap();
+
+        info!("Received aggregated response from BLS Aggregation Service");
+        self.send_aggregated_response_to_contract(aggregated_response).await?;
+
+        info!("Sent aggregated response to contract");
+
+        // if let Some(aggregated_response) = self
+        //     .bls_aggregation_service
+        //     .as_ref()
+        //     .ok_or_else(|| {
+        //         std::io::Error::new(
+        //             std::io::ErrorKind::Other,
+        //             "BLS Aggregation Service not initialized",
+        //         )
+        //     })
+        //     .map_err(|e| Error::Context(e.to_string()))?
+        //     .lock()
+        //     .await
+        //     .aggregated_response_receiver
+        //     .lock()
+        //     .await
+        //     .recv()
+        //     .await
+        // {
+        //     info!("Received aggregated response from BLS Aggregation Service");
+        //     let response = aggregated_response.map_err(|e| Error::Context(e.to_string()))?;
+        //     self.send_aggregated_response_to_contract(response).await?;
+        // } else {
+        //     info!("No aggregated response received from BLS Aggregation Service");
+        // }
         Ok(())
     }
 

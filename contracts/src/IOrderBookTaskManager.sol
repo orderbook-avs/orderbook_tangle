@@ -33,6 +33,9 @@ interface IOrderBookTaskManager {
         uint256 slippage;
         bool isBuy;
         uint256 timestamp;
+        uint256 timestamp_matched;
+        bool isPartiallyFilled;
+        bool isFilled;                
     }
 
     struct Task {
