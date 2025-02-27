@@ -61,22 +61,14 @@ pub async fn order_eigen(
             continue;
         }
 
-        if order.isBuy == other_order.isBuy {
-            continue;
-        }
-
-        if order.isBuy && other_order.token_owned != order.token_not_owned {
+        if other_order.token_owned == order.token_owned {
             continue;
         } 
         
-        if !order.isBuy && other_order.token_not_owned != order.token_owned {
-            continue;
-        }
-        
-        let price_for_user = order.price / order.amount;
-        let price_for_other_user = other_order.price / other_order.amount;   
+        let price_for_user = order.amount_owned / order.amount_not_owned;
+        let price_for_other_user = other_order.amount_owned / other_order.amount_not_owned;   
 
-        if (price_for_other_user < price_for_user && order.isBuy) || (price_for_other_user > price_for_user && !order.isBuy) {
+        if (price_for_other_user < price_for_user) {
             continue;
         }
         
@@ -93,25 +85,25 @@ pub async fn order_eigen(
 
         matched_order_index = U256::from(index);
 
-        if other_order.amount == order.amount {            
+        if other_order.amount_not_owned == order.amount_not_owned {            
             new_order.isFilled = true;       
-            new_order.amount = U256::from(0);                 
+            new_order.amount_not_owned = U256::from(0);                 
             new_other_order.isFilled = true;
-            new_other_order.amount = U256::from(0);
+            new_other_order.amount_not_owned = U256::from(0);
         }
 
-        if other_order.amount > order.amount {
+        if other_order.amount_not_owned > order.amount_not_owned {
             new_order.isFilled = true;
             new_other_order.isPartiallyFilled = true;
-            new_order.amount = U256::from(0);
-            new_other_order.amount = other_order.amount - order.amount;
+            new_order.amount_not_owned = U256::from(0);
+            new_other_order.amount_not_owned = other_order.amount_not_owned - order.amount_not_owned;
         }
 
-        if other_order.amount < order.amount {
+        if other_order.amount_not_owned < order.amount_not_owned {
             new_other_order.isFilled = true;
-            new_other_order.amount = U256::from(0);
+            new_other_order.amount_not_owned = U256::from(0);
             new_order.isPartiallyFilled = true;
-            new_order.amount = order.amount - other_order.amount;
+            new_order.amount_not_owned = order.amount_not_owned - other_order.amount_not_owned;
         }
 
         break;

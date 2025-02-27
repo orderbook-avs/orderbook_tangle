@@ -27,12 +27,11 @@ interface IOrderBookTaskManager {
     // STRUCTS
     struct Order {
         address user;        
-        uint256 price;
-        uint256 amount;
+        uint256 amount_owned; //
+        uint256 amount_not_owned; //amount they want to buy or sell
         address token_not_owned;
         address token_owned;
         uint256 slippage;
-        bool isBuy;
         uint256 timestamp;
         uint256 timestamp_matched;
         bool isPartiallyFilled;
@@ -79,12 +78,11 @@ interface IOrderBookTaskManager {
     // FUNCTIONS
     // NOTE: this function creates new task.
     function createNewTask(
-        uint256 price,
-        uint256 amount,
+        uint256 amount_owned,
+        uint256 amount_not_owned,
         address token_not_owned,
         address token_owned,
         uint256 slippage,
-        bool isBuy,
         uint32 quorumThresholdPercentage,
         bytes calldata quorumNumbers
     ) external;

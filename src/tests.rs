@@ -231,7 +231,7 @@ pub async fn setup_task_spawner(
             info!("Creating a new task...");
             let create_task_receipt = get_receipt(
                 task_manager
-                    .createNewTask(U256::from(5), U256::from(1), address!("0x0000000000000000000000000000000000000000"), U256::from(1), true, 100u32, vec![0].into())
+                    .createNewTask(U256::from(5), U256::from(1), address!("0x0000000000000000000000000000000000000000"), address!("0x0000000000000000000000000000000000000000"), U256::from(1),  100u32, vec![0].into())
                     .from(address!("15d34AAf54267DB7D7c367839AAf71A00a2C6A65"))
             )
             .await;
@@ -272,7 +272,7 @@ pub async fn setup_task_spawner(
                 .await
                 .unwrap();
             info!("Mined a block...");
-        // }
+        }
     }
 }
 
@@ -365,5 +365,4 @@ pub async fn wait_for_responses(
         }
     })
     .await
-    }
 }

@@ -60,7 +60,7 @@ async fn main() {
             blueprint_sdk::tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
             let task = contract_task_generator
-                .createNewTask(U256::from(5), U256::from(1), address!("0x0000000000000000000000000000000000000000"), U256::from(1), true, 100u32, vec![0].into())
+                .createNewTask(U256::from(5), U256::from(1), address!("0x0000000000000000000000000000000000000000"), address!("0x0000000000000000000000000000000000000000"), U256::from(1), 100u32, vec![0].into())
                 .from(address!("15d34AAf54267DB7D7c367839AAf71A00a2C6A65"));
             let receipt = task.send().await.unwrap().get_receipt().await.unwrap();
             if receipt.status() {

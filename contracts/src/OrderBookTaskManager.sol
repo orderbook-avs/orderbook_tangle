@@ -86,12 +86,11 @@ contract OrderBookTaskManager is
     /* FUNCTIONS */
     // NOTE: this function creates new task, assigns it a taskId
     function createNewTask(
-        uint256 price,
-        uint256 amount,
+        uint256 amount_owned,
+        uint256 amount_not_owned,
         address token_not_owned,
         address token_owned,
         uint256 slippage,
-        bool isBuy,
         uint32 quorumThresholdPercentage,
         bytes calldata quorumNumbers
     ) external onlyTaskGenerator {
@@ -105,12 +104,11 @@ contract OrderBookTaskManager is
         // Create a new order
         Order memory newOrder;
         newOrder.user = msg.sender;
-        newOrder.price = price;
-        newOrder.amount = amount;
+        newOrder.amount_owned = amount_owned;
+        newOrder.amount_not_owned = amount_not_owned;
         newOrder.token_not_owned = token_not_owned;
         newOrder.token_owned = token_owned;
         newOrder.slippage = slippage;
-        newOrder.isBuy = isBuy;
         newOrder.timestamp = block.timestamp;
         newOrder.isPartiallyFilled = false;
         newOrder.isFilled = false;
