@@ -56,7 +56,7 @@ async fn main() {
         let contract_task_generator = OrderBookTaskManager::new(*TASK_MANAGER_ADDRESS, provider);
 
         // We use the Anvil Account #4 as the Task generator address
-        loop {
+        for _ in 1..15 {
             blueprint_sdk::tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
             let task = contract_task_generator

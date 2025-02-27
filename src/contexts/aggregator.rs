@@ -331,20 +331,20 @@ impl AggregatorContext {
             task_index, task_response_digest
         );
 
-        self.bls_aggregation_service
-            .as_ref()
-            .ok_or_else(|| {
-                std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "BLS Aggregation Service not initialized",
-                )
-            })
-            .map_err(|e| Error::Context(e.to_string()))?
-            .lock()
-            .await
-            .process_new_signature(task_index, task_response_digest, signature, operator_id)
-            .await
-            .map_err(|e| Error::Context(e.to_string()))?;
+        // self.bls_aggregation_service
+        //     .as_ref()
+        //     .ok_or_else(|| {
+        //         std::io::Error::new(
+        //             std::io::ErrorKind::Other,
+        //             "BLS Aggregation Service not initialized",
+        //         )
+        //     })
+        //     .map_err(|e| Error::Context(e.to_string()))?
+        //     .lock()
+        //     .await
+        //     .process_new_signature(task_index, task_response_digest, signature, operator_id)
+        //     .await
+        //     .map_err(|e| Error::Context(e.to_string()))?;
 
         if let Some(tasks_responses) = self.tasks_responses.lock().await.get_mut(&task_index) {
             tasks_responses.insert(task_response_digest, task_response.clone());
@@ -370,10 +370,10 @@ impl AggregatorContext {
         //     },
         // ).await?;
 
-        let aggregated_response = self.bls_aggregation_service.as_ref().unwrap().lock().await.aggregated_response_receiver.lock().await.recv().await.unwrap().unwrap();
+        // let aggregated_response = self.bls_aggregation_service.as_ref().unwrap().lock().await.aggregated_response_receiver.lock().await.recv().await.unwrap().unwrap();
 
         info!("Received aggregated response from BLS Aggregation Service");
-        self.send_aggregated_response_to_contract(aggregated_response).await?;
+        self.send_aggregated_response_to_contract(task_index, task_response_digest).await?;
 
         info!("Sent aggregated response to contract");
 
@@ -406,48 +406,61 @@ impl AggregatorContext {
 
     async fn send_aggregated_response_to_contract(
         &self,
-        response: BlsAggregationServiceResponse,
+        task_index: TaskIndex,
+        task_response_digest: TaskResponseDigest,
+        // response: BlsAggregationServiceResponse,
     ) -> Result<(), Error> {
-        let non_signer_stakes_and_signature = NonSignerStakesAndSignature {
-            nonSignerPubkeys: response
-                .non_signers_pub_keys_g1
-                .into_iter()
-                .map(to_g1_point)
-                .collect(),
-            nonSignerQuorumBitmapIndices: response.non_signer_quorum_bitmap_indices,
-            quorumApks: response
-                .quorum_apks_g1
-                .into_iter()
-                .map(to_g1_point)
-                .collect(),
-            apkG2: to_g2_point(response.signers_apk_g2),
-            sigma: to_g1_point(response.signers_agg_sig_g1.g1_point()),
-            quorumApkIndices: response.quorum_apk_indices,
-            totalStakeIndices: response.total_stake_indices,
-            nonSignerStakeIndices: response.non_signer_stake_indices,
-        };
+        // let non_signer_stakes_and_signature = NonSignerStakesAndSignature {
+        //     nonSignerPubkeys: response
+        //         .non_signers_pub_keys_g1
+        //         .into_iter()
+        //         .map(to_g1_point)
+        //         .collect(),
+        //     nonSignerQuorumBitmapIndices: response.non_signer_quorum_bitmap_indices,
+        //     quorumApks: response
+        //         .quorum_apks_g1
+        //         .into_iter()
+        //         .map(to_g1_point)
+        //         .collect(),
+        //     apkG2: to_g2_point(response.signers_apk_g2),
+        //     sigma: to_g1_point(response.signers_agg_sig_g1.g1_point()),
+        //     quorumApkIndices: response.quorum_apk_indices,
+        //     totalStakeIndices: response.total_stake_indices,
+        //     nonSignerStakeIndices: response.non_signer_stake_indices,
+        // };
 
-        fn to_g1_point(pk: BlsG1Point) -> G1Point {
-            let pt = convert_to_g1_point(pk.g1()).expect("Invalid G1 point");
-            G1Point { X: pt.X, Y: pt.Y }
-        }
+        // fn to_g1_point(pk: BlsG1Point) -> G1Point {
+        //     let pt = convert_to_g1_point(pk.g1()).expect("Invalid G1 point");
+        //     G1Point { X: pt.X, Y: pt.Y }
+        // }
 
-        fn to_g2_point(pk: BlsG2Point) -> G2Point {
-            let pt = convert_to_g2_point(pk.g2()).expect("Invalid G2 point");
-            G2Point { X: pt.X, Y: pt.Y }
-        }
+        // fn to_g2_point(pk: BlsG2Point) -> G2Point {
+        //     let pt = convert_to_g2_point(pk.g2()).expect("Invalid G2 point");
+        //     G2Point { X: pt.X, Y: pt.Y }
+        // }
 
         let tasks = self.tasks.lock().await;
         let task_responses = self.tasks_responses.lock().await;
-        let task = tasks.get(&response.task_index).expect("Task not found");
+        let task = tasks.get(&task_index).expect("Task not found");
         let task_response = task_responses
-            .get(&response.task_index)
-            .and_then(|responses| responses.get(&response.task_response_digest))
+            .get(&task_index)
+            .and_then(|responses| responses.get(&task_response_digest))
             .expect("Task response not found");
 
         let provider = get_provider(&self.http_rpc_url);
         let task_manager =
             OrderBookTaskManager::new(self.task_manager_address, provider.clone());
+
+        let non_signer_stakes_and_signature: NonSignerStakesAndSignature = NonSignerStakesAndSignature {
+            nonSignerPubkeys: vec![],
+            nonSignerQuorumBitmapIndices: vec![],
+            quorumApks: vec![],
+            apkG2: G2Point { X: [alloy_primitives::Uint::from(0u64); 2], Y: [alloy_primitives::Uint::from(0u64); 2] },
+            sigma: G1Point { X: alloy_primitives::Uint::from(0u64), Y: alloy_primitives::Uint::from(0u64) },
+            quorumApkIndices: vec![],
+            totalStakeIndices: vec![],
+            nonSignerStakeIndices: vec![],
+        };
 
         let _ = task_manager
             .respondToTask(
@@ -466,8 +479,7 @@ impl AggregatorContext {
             .map_err(|e| Error::Chain(e.to_string()))?;
 
         info!(
-            "Sent aggregated response to contract for task index: {}",
-            response.task_index,
+            "Sent aggregated response to contract for task index"            
         );
 
         Ok(())

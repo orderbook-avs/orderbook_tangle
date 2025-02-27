@@ -1,4 +1,4 @@
-use crate::constants::{AGGREGATOR_PRIVATE_KEY, TASK_MANAGER_ADDRESS};
+use crate::constants::AGGREGATOR_PRIVATE_KEY;
 use crate::contexts::aggregator::AggregatorContext;
 use crate::contexts::client::AggregatorClient;
 use crate::contexts::order::EigenOrderContext;
@@ -60,6 +60,8 @@ async fn run_eigenlayer_orderbook_test(
     // Deploy Task Manager
     let task_manager_address = deploy_task_manager(&harness).await;
 
+    info!("Task Manager Address: {}", task_manager_address);
+
     // Spawn Task Spawner and Task Response Listener
     let successful_responses = Arc::new(Mutex::new(0));
     let successful_responses_clone = successful_responses.clone();
@@ -88,7 +90,7 @@ async fn run_eigenlayer_orderbook_test(
         std_config: env.clone(),
     };
     let aggregator_context =
-        AggregatorContext::new(server_address, *TASK_MANAGER_ADDRESS, wallet, env.clone())
+        AggregatorContext::new(server_address, task_manager_address, wallet, env.clone())
             .await
             .unwrap();
     let aggregator_context_clone = aggregator_context.clone();
