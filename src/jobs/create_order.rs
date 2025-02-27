@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use crate::contexts::client::SignedTaskResponse;
 use crate::contexts::order::EigenOrderContext;
-use crate::IOrderBookTaskManager::{TaskResponse, Match, Order};
+use crate::IOrderBookTaskManager::{TaskResponse, Order};
 use crate::{
     OrderBookTaskManager, ProcessorError, ORDER_BOOK_TASK_MANAGER_ABI_STRING,
 };
@@ -48,25 +48,81 @@ pub async fn order_eigen(
 
     info!("Finding matches for task index: {}", task_index);
 
-    // Create a sample Match object
-    let sample_match = Match {
-        buyOrder: order.clone(),
-        sellOrder: order.clone(),
-        buyAmount: U256::from(1),
-        sellAmount: U256::from(1),
-        price: U256::from(1),
-    };
+    let mut new_order = order.clone();
+    let mut new_other_order = order.clone();
+    let mut matched_order_index = U256::from(0);
 
-    // info!("The sample match is {:#?}", sample_match);
+    for (index, other_order) in orderbook.iter().enumerate() {
+        if order.user == other_order.user {
+            continue;
+        }
 
-    let matches = vec![sample_match];
+        if order.isFilled || other_order.isFilled {
+            continue;
+        }
 
-    // info!("The matches are {:#?}", matches);
+        if order.isBuy == other_order.isBuy {
+            continue;
+        }
+
+        if order.isBuy && other_order.token_owned != order.token_not_owned {
+            continue;
+        } 
+        
+        if !order.isBuy && other_order.token_not_owned != order.token_owned {
+            continue;
+        }
+        
+        let price_for_user = order.price / order.amount;
+        let price_for_other_user = other_order.price / other_order.amount;   
+
+        if (price_for_other_user < price_for_user && order.isBuy) || (price_for_other_user > price_for_user && !order.isBuy) {
+            continue;
+        }
+        
+        let diff = if price_for_user >= price_for_other_user {
+            price_for_user - price_for_other_user
+        } else {
+            price_for_other_user - price_for_user
+        };
+
+        let percentage_difference = (diff / ((price_for_user + price_for_other_user) / alloy_primitives::Uint::from(2))) * alloy_primitives::Uint::from(100);
+        if percentage_difference > order.slippage {
+            continue;
+        }
+
+        matched_order_index = U256::from(index);
+
+        if other_order.amount == order.amount {            
+            new_order.isFilled = true;       
+            new_order.amount = U256::from(0);                 
+            new_other_order.isFilled = true;
+            new_other_order.amount = U256::from(0);
+        }
+
+        if other_order.amount > order.amount {
+            new_order.isFilled = true;
+            new_other_order.isPartiallyFilled = true;
+            new_order.amount = U256::from(0);
+            new_other_order.amount = other_order.amount - order.amount;
+        }
+
+        if other_order.amount < order.amount {
+            new_other_order.isFilled = true;
+            new_other_order.amount = U256::from(0);
+            new_order.isPartiallyFilled = true;
+            new_order.amount = order.amount - other_order.amount;
+        }
+
+        break;
+    }
 
     // Create a TaskResponse object
     let task_response = TaskResponse {
-        referenceTaskIndex: task_index,
-        matches: matches,
+        referenceTaskIndex: task_index,        
+        newOrder: new_order,
+        newOtherOrder: new_other_order,      
+        matchedOrderIndex: matched_order_index,  
     };
 
     // info!("The task response is {:#?}", task_response);

@@ -217,21 +217,21 @@ pub async fn setup_task_spawner(
     let http_endpoint = harness.http_endpoint.to_string();
 
     let provider = get_provider_http(http_endpoint.as_str());
-    let task_manager = OrderBookTaskManager::new(task_manager_address, provider.clone());
+    let task_manager: OrderBookTaskManager::OrderBookTaskManagerInstance<alloy_transport::BoxTransport, alloy_provider::RootProvider<alloy_transport::BoxTransport>> = OrderBookTaskManager::new(task_manager_address, provider.clone());
     let registry_coordinator =
         RegistryCoordinator::new(registry_coordinator_address, provider.clone());
 
     let operators = vec![vec![accounts[0]]];
     let quorums = Bytes::from(vec![0, 1, 2]); // Using multiple quorum numbers to ensure non-empty array
     async move {
-        loop {
+        // for _ in 0..2 {
             // Increased delay to allow for proper task initialization
-            tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+            tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
             info!("Creating a new task...");
             let create_task_receipt = get_receipt(
                 task_manager
-                    .createNewTask(U256::from(5), U256::from(1), address!("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"), U256::from(1), true, 100u32, quorums.clone())
+                    .createNewTask(U256::from(5), U256::from(1), address!("0x0000000000000000000000000000000000000000"), U256::from(1), true, 100u32, vec![0].into())
                     .from(address!("15d34AAf54267DB7D7c367839AAf71A00a2C6A65"))
             )
             .await;
@@ -272,7 +272,7 @@ pub async fn setup_task_spawner(
                 .await
                 .unwrap();
             info!("Mined a block...");
-        }
+        // }
     }
 }
 

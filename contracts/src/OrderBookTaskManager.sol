@@ -88,7 +88,8 @@ contract OrderBookTaskManager is
     function createNewTask(
         uint256 price,
         uint256 amount,
-        address token,
+        address token_not_owned,
+        address token_owned,
         uint256 slippage,
         bool isBuy,
         uint32 quorumThresholdPercentage,
@@ -106,7 +107,8 @@ contract OrderBookTaskManager is
         newOrder.user = msg.sender;
         newOrder.price = price;
         newOrder.amount = amount;
-        newOrder.token = token;
+        newOrder.token_not_owned = token_not_owned;
+        newOrder.token_owned = token_owned;
         newOrder.slippage = slippage;
         newOrder.isBuy = isBuy;
         newOrder.timestamp = block.timestamp;

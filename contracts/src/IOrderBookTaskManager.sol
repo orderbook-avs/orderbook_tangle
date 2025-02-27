@@ -29,7 +29,8 @@ interface IOrderBookTaskManager {
         address user;        
         uint256 price;
         uint256 amount;
-        address token;
+        address token_not_owned;
+        address token_owned;
         uint256 slippage;
         bool isBuy;
         uint256 timestamp;
@@ -53,11 +54,8 @@ interface IOrderBookTaskManager {
     }
 
     struct Match {
-        Order buyOrder;
-        Order sellOrder;
-        uint256 buyAmount;
-        uint256 sellAmount;      
-        uint256 price;
+        Order newOrder;
+        Order newOtherOrder;
     }
 
     // Task response is hashed and signed by operators.
@@ -65,8 +63,9 @@ interface IOrderBookTaskManager {
     struct TaskResponse {
         // Can be obtained by the operator from the event NewTaskCreated.
         uint32 referenceTaskIndex;
-        // Match struct
-        Match[] matches;
+        Order newOrder;
+        Order newOtherOrder;
+        uint256 matchedOrderIndex;
     }
 
     // Extra information related to taskResponse, which is filled inside the contract.
@@ -82,7 +81,8 @@ interface IOrderBookTaskManager {
     function createNewTask(
         uint256 price,
         uint256 amount,
-        address token,
+        address token_not_owned,
+        address token_owned,
         uint256 slippage,
         bool isBuy,
         uint32 quorumThresholdPercentage,
