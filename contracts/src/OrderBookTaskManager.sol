@@ -266,4 +266,8 @@ contract OrderBookTaskManager is
     function getTaskResponseWindowBlock() external view returns (uint32) {
         return TASK_RESPONSE_WINDOW_BLOCK;
     }
+
+    function getAllOrders() external view returns (Order[] memory) {
+        return orders;
+    }
 }
