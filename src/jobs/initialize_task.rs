@@ -46,8 +46,11 @@ pub async fn initialize_bls_task(
                 time_to_expiry,
             )
             .await
-            .unwrap()
+            .unwrap();
+
+        info!("Task initialized for BLS aggregation");
     }
+
 
     Ok(1)
 }

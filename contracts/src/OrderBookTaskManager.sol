@@ -93,11 +93,11 @@ contract OrderBookTaskManager is
         bytes calldata quorumNumbers
     ) external onlyTaskGenerator {
         // Check if the order is valid
-        require(price > 0, "Price must be greater than 0");
-        require(token != address(0), "Token must not be the zero address");        
-        require(amount > 0, "Amount must be greater than 0");
-        require(quorumThresholdPercentage > 0 && quorumThresholdPercentage <= 100, "Quorum threshold percentage must be between 0 and 100");
-        require(quorumNumbers.length > 0, "Quorum numbers must not be empty");
+        //require(price > 0, "Price must be greater than 0");
+        // require(token != address(0), "Token must not be the zero address");        
+        //require(amount > 0, "Amount must be greater than 0");
+        // require(quorumThresholdPercentage > 0 && quorumThresholdPercentage <= 100, "Quorum threshold percentage must be between 0 and 100");
+        //require(quorumNumbers.length > 0, "Quorum numbers must not be empty");
 
         // Create a new order
         Order memory newOrder;

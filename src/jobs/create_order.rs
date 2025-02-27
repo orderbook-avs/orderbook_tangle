@@ -46,22 +46,30 @@ pub async fn order_eigen(
 ) -> std::result::Result<u32, Infallible> {
     let client = ctx.client.clone();
 
+    info!("Finding matches for task index: {}", task_index);
+
     // Create a sample Match object
     let sample_match = Match {
-        buyOrder: order,
-        sellOrder: orderbook[5].clone(),
+        buyOrder: order.clone(),
+        sellOrder: order.clone(),
         buyAmount: U256::from(1),
         sellAmount: U256::from(1),
         price: U256::from(1),
     };
 
+    // info!("The sample match is {:#?}", sample_match);
+
     let matches = vec![sample_match];
+
+    // info!("The matches are {:#?}", matches);
 
     // Create a TaskResponse object
     let task_response = TaskResponse {
         referenceTaskIndex: task_index,
         matches: matches,
     };
+
+    // info!("The task response is {:#?}", task_response);
 
     let bn254_public = ctx.keystore().first_local::<ArkBlsBn254>().unwrap();
     let bn254_secret = match ctx.keystore().expose_bls_bn254_secret(&bn254_public) {
@@ -77,8 +85,13 @@ pub async fn order_eigen(
     };
     let operator_id = operator_id_from_key(bls_key_pair.clone());
 
+    // info!("The operator ID is {}", operator_id);
+
     // Sign the Hashed Message and send it to the BLS Aggregator
     let msg_hash = keccak256(<TaskResponse as SolType>::abi_encode(&task_response));
+
+    // info!("The message hash is {:#?}", msg_hash);
+
     let signed_response = SignedTaskResponse {
         task_response,
         signature: bls_key_pair.sign_message(msg_hash.as_ref()),

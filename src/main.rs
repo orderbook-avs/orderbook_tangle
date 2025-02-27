@@ -16,6 +16,7 @@ use ob_avs::contexts::order::EigenOrderContext;
 use ob_avs::jobs::create_order::OrderEigenEventHandler;
 use ob_avs::jobs::initialize_task::InitializeBlsTaskEventHandler;
 use ob_avs::OrderBookTaskManager;
+use blueprint_sdk::utils::evm::get_provider_http;
 
 #[blueprint_sdk::main(env)]
 async fn main() {
@@ -24,12 +25,6 @@ async fn main() {
         .expect("failed to generate wallet ");
     let wallet = EthereumWallet::from(signer);
     let provider = get_wallet_provider_http(&env.http_rpc_endpoint, wallet.clone());
-
-    let signer_task_generator: PrivateKeySigner = "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
-        .parse()
-        .expect("failed to generate wallet ");
-    let wallet_task_generator = EthereumWallet::from(signer_task_generator);
-    let provider_task_generator = get_wallet_provider_http(&env.http_rpc_endpoint, wallet_task_generator.clone());
 
     let server_address = format!("{}:{}", "127.0.0.1", 8081);
     let eigen_order_context = EigenOrderContext {
@@ -54,16 +49,17 @@ async fn main() {
         InitializeBlsTaskEventHandler::new(contract.clone(), aggregator_context.clone());
 
     let create_order = OrderEigenEventHandler::new(contract.clone(), eigen_order_context);
-    
+    let rpc_endpoint = env.http_rpc_endpoint.clone();    
     info!("Spawning a task to create a task on the contract...");
     blueprint_sdk::tokio::spawn(async move {                
-        let contract_task = OrderBookTaskManager::new(*TASK_MANAGER_ADDRESS, provider_task_generator.clone());
+        let provider = get_provider_http(&rpc_endpoint);
+        let contract_task_generator = OrderBookTaskManager::new(*TASK_MANAGER_ADDRESS, provider);
 
         // We use the Anvil Account #4 as the Task generator address
         loop {
             blueprint_sdk::tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
-            let task: alloy_contract::CallBuilder<alloy_transport::BoxTransport, &alloy_provider::RootProvider<alloy_transport::BoxTransport>, std::marker::PhantomData<OrderBookTaskManager::createNewTaskCall>> = contract_task
+            let task = contract_task_generator
                 .createNewTask(U256::from(5), U256::from(1), address!("0x0000000000000000000000000000000000000000"), U256::from(1), true, 100u32, vec![0].into())
                 .from(address!("15d34AAf54267DB7D7c367839AAf71A00a2C6A65"));
             let receipt = task.send().await.unwrap().get_receipt().await.unwrap();

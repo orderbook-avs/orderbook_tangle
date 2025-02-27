@@ -350,7 +350,7 @@ impl AggregatorContext {
             tasks_responses.insert(task_response_digest, task_response.clone());
         }
 
-        debug!(
+        info!(
             "Successfully processed new signature for task index: {}",
             task_index
         );
@@ -373,8 +373,11 @@ impl AggregatorContext {
             .recv()
             .await
         {
+            info!("Received aggregated response from BLS Aggregation Service");
             let response = aggregated_response.map_err(|e| Error::Context(e.to_string()))?;
             self.send_aggregated_response_to_contract(response).await?;
+        } else {
+            info!("No aggregated response received from BLS Aggregation Service");
         }
         Ok(())
     }
