@@ -124,7 +124,7 @@ async fn run_eigenlayer_orderbook_test(
     test_env.run_runner().await.unwrap();
 
     // Wait for the process to complete or timeout
-    let timeout_duration = Duration::from_secs(300);
+    let timeout_duration = Duration::from_secs(600);
     let result = wait_for_responses(
         successful_responses.clone(),
         expected_responses,
@@ -132,7 +132,7 @@ async fn run_eigenlayer_orderbook_test(
     )
     .await;
 
-    // // Start the shutdown/cleanup process
+    // Start the shutdown/cleanup process
     aggregator_context_clone.shutdown().await;
 
     // Clean up the ./db directory
@@ -169,7 +169,7 @@ pub async fn deploy_task_manager(harness: &EigenlayerTestHarness) -> Address {
         registry_coordinator_address,
         10u32,
     );
-    info!("Deploying Incredible Squaring Task Manager");
+    info!("Deploying Order Book Task Manager");
     let task_manager_address = match get_receipt(deploy_call).await {
         Ok(receipt) => match receipt.contract_address {
             Some(address) => address,
@@ -184,7 +184,7 @@ pub async fn deploy_task_manager(harness: &EigenlayerTestHarness) -> Address {
         }
     };
     info!(
-        "Deployed Incredible Squaring Task Manager at {}",
+        "Deployed Order Book Task Manager at {}",
         task_manager_address
     );
     std::env::set_var("TASK_MANAGER_ADDRESS", task_manager_address.to_string());
@@ -224,7 +224,7 @@ pub async fn setup_task_spawner(
     let operators = vec![vec![accounts[0]]];
     let quorums = Bytes::from(vec![0, 1, 2]); // Using multiple quorum numbers to ensure non-empty array
     async move {
-        // for _ in 0..2 {
+        for _ in 0..2 {
             // Increased delay to allow for proper task initialization
             tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
@@ -365,4 +365,5 @@ pub async fn wait_for_responses(
         }
     })
     .await
+    }
 }
