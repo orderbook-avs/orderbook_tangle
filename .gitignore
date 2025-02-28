@@ -38,3 +38,4 @@ blueprint.lock
 
 # Soldeer dependencies
 dependencies/
+node_modules
