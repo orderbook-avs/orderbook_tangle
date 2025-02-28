@@ -12,6 +12,8 @@ import {OperatorStateRetriever} from "eigenlayer-middleware/src/OperatorStateRet
 import "eigenlayer-middleware/src/libraries/BN254.sol";
 import "contracts/src/IOrderBookTaskManager.sol";
 
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
 contract OrderBookTaskManager is
     Initializable,
     OwnableUpgradeable,
@@ -21,6 +23,8 @@ contract OrderBookTaskManager is
     IOrderBookTaskManager
 {
     using BN254 for BN254.G1Point;
+
+    ERC20 public rewardToken;
 
     /* CONSTANT */
     // The number of blocks from the task initialization within which the aggregator has to respond to
@@ -137,8 +141,8 @@ contract OrderBookTaskManager is
         NonSignerStakesAndSignature memory nonSignerStakesAndSignature
     ) external onlyAggregator {
         uint32 taskCreatedBlock = task.taskCreatedBlock;
-        bytes calldata quorumNumbers = task.quorumNumbers;
-        uint32 quorumThresholdPercentage = task.quorumThresholdPercentage;
+        //bytes calldata quorumNumbers = task.quorumNumbers;
+        //uint32 quorumThresholdPercentage = task.quorumThresholdPercentage;
 
         // check that the task is valid, hasn't been responsed yet, and is being responsed in time
         require(
@@ -157,8 +161,33 @@ contract OrderBookTaskManager is
             "Aggregator has responded to the task too late"
         );
         
-        // Mark order as executed
-        // orders[taskResponse.referenceTaskIndex].isExecuted = true;        
+        
+        uint256 newOrderTransferAmt = orders[orders.length - 1].amount_owned - taskResponse.newOrder.amount_owned;
+        uint256 newOrderRewardAmt = taskResponse.newOrder.amount_not_owned - orders[orders.length - 1].amount_not_owned;
+
+        uint256 newOtherOrderTransferAmt = orders[taskResponse.referenceTaskIndex].amount_owned - taskResponse.newOtherOrder.amount_owned;
+        uint256 newOtherOrderRewardAmt = taskResponse.newOtherOrder.amount_not_owned - orders[taskResponse.referenceTaskIndex].amount_not_owned;
+
+        uint256 rewardTokenAmtFromOtherOrder = newOtherOrderTransferAmt - newOrderRewardAmt;
+        //transfer from other order to reward token
+        require(ERC20(taskResponse.newOrder.token_not_owned).transferFrom(taskResponse.newOtherOrder.user, address(rewardToken), rewardTokenAmtFromOtherOrder));
+
+        uint256 transferToOrderAmt = newOtherOrderTransferAmt - rewardTokenAmtFromOtherOrder;
+        //transfer from other order to order
+        require(ERC20(taskResponse.newOrder.token_not_owned).transferFrom(taskResponse.newOtherOrder.user, taskResponse.newOrder.user, transferToOrderAmt));
+
+
+        uint256 rewardTokenAmtFromOrder = newOrderTransferAmt - newOtherOrderRewardAmt;
+        //transfer from order to reward token
+        require(ERC20(taskResponse.newOrder.token_owned).transferFrom(taskResponse.newOrder.user, address(rewardToken), rewardTokenAmtFromOrder));
+
+        uint256 transferToOtherOrderAmt = newOrderTransferAmt - rewardTokenAmtFromOrder;
+        //transfer from order to other order
+        require(ERC20(taskResponse.newOrder.token_owned).transferFrom(taskResponse.newOrder.user, taskResponse.newOtherOrder.user, transferToOtherOrderAmt));
+
+        //update orders in orderbook
+        orders[taskResponse.referenceTaskIndex] = taskResponse.newOtherOrder;
+        orders[orders.length - 1] = taskResponse.newOrder;
 
         TaskResponseMetadata memory taskResponseMetadata = TaskResponseMetadata(
             uint32(block.number),
