@@ -56,11 +56,11 @@ async fn main() {
         let contract_task_generator = OrderBookTaskManager::new(*TASK_MANAGER_ADDRESS, provider);
 
         // We use the Anvil Account #4 as the Task generator address
-        for _ in 1..15 {
+        for _ in 1..3 {
             blueprint_sdk::tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
             let task = contract_task_generator
-                .createNewTask(U256::from(5), U256::from(1), address!("0x0000000000000000000000000000000000000000"), address!("0x0000000000000000000000000000000000000000"), U256::from(1), 100u32, vec![0].into())
+                .createNewTask(U256::from(5), U256::from(200), address!("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"), address!("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"), U256::from(5), 0, vec![].into())
                 .from(address!("15d34AAf54267DB7D7c367839AAf71A00a2C6A65"));
             let receipt = task.send().await.unwrap().get_receipt().await.unwrap();
             if receipt.status() {

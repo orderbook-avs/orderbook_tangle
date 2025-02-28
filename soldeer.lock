@@ -12,6 +12,12 @@ checksum = "57ada736f383289db77fac4472d48f820e7c98172cf9b01681b0c37065ce043f"
 integrity = "4753ffdfa0dde40878372b6a4d8e8fd1648b190b33996896c8b92f6f1680850f"
 
 [[dependencies]]
+name = "openzeppelin-contracts"
+version = "5.2.0"
+git = "https://github.com/openzeppelin/openzeppelin-contracts.git"
+rev = "acd4ff74de833399287ed6b31b4debf6b2b35527"
+
+[[dependencies]]
 name = "openzeppelin-contracts-upgradeable"
 version = "5.2.0"
 git = "https://github.com/openzeppelin/openzeppelin-contracts-upgradeable.git"
