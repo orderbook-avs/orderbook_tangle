@@ -13,8 +13,8 @@ Before you can run this project, you will need to have the following software in
 
 - [Rust](https://www.rust-lang.org/tools/install)
 - [Forge](https://getfoundry.sh)
-- [Anvil]
-- [Docker]
+- [Anvil](https://crates.io/crates/anvil)
+- [Docker](https://www.docker.com/)
 
 You will also need to install [cargo-tangle](https://crates.io/crates/cargo-tangle), the CLI tool for creating and
 deploying Blueprints:
